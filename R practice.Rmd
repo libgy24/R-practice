@@ -373,4 +373,22 @@ Use list and array column with caution: many functions that work with data frame
 
 
 # 3 Subetting
+R's subsetting operations are powerful and fast. Mastery of subsetting allows you to succinctly express complex operations in a way that few other languages can match. Subetting is hard to learn because you need to master a number of interrelated concepts:
+
+1. The three subsetting operators.
+2. The six types of subetting.
+3. Important differences in behaviour for different objects (e.g. vectors, lists, factors, matrices, and data frames)
+4. The use of subsetting in conjunction with assignment.
+
+## 3.1 Data types 
+
+It's easy to learn how subetting works for a atomic vectors, and then how it generalises to higher dimensios and other more complicated objects. We'll start with [, the most commonly used operator. Section 3.2 will cover [[ and $ two other main subsetting operators.
+
+### 3.1.1 Atomic vectors
+Let's explore the different types of subsetting with a simple vector, x.
+
+```{r, echo = T}
+x<-c(2.1, 4.2, 3.3, 5.4)
+
+```
 
