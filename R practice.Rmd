@@ -570,3 +570,56 @@ S3 objects are made up of atomic vectors, arrays, and lists, so you can always p
 
 There are also two additional subsetting operators that are needed for S4 objects: @(equivalent to $) and slot() (equivalent to [[). @ is more restrictive than $ in that it wil return an error if the slot does not exist. These are described in more detail in Section 7.3
 
+## 3.2 Subsetting operators
+
+There are two other subsetting operators. [[ and $. [[ is similar to [, except it can only return a single value and it allows you to pull pieces out of a list. $ is a useful shorthand for [[ combined with character subsetting.
+
+You need [[ when owrking with lists. This is because when [ is applied to a list it always returns a list: it never gives yu the contents of the list. To get the contents , you need [[:
+
+"If list x is a train carring objects, then x[[5]] is the object in car 5; x[4:6] is a train of cars 4-6"  --RLangTip
+
+Because it can return only a single value, you must use [[ with either a single positive integer or a string:
+
+
+```{r, echo = T}
+a<-list(a = 1, b = 2)
+a[[1]]
+
+# if you do supply a vector it indexes recursively 
+
+b<- list(a = list(b = list(c= list(d = 1))))
+
+b[[c('a','b','c','d')]]
+
+# same as
+ b[['a']][['b']][['c']][['d']]
+```
+Because data frames are lists of columns, you can use [[ to extract a column from data frames: mtcars[[1]], mtcars[['cyl']].
+
+S3 and S4 objects can override the standard behaviour of [ and [[ so they behave differently for different types of objects. The key difference is usually how you select between simplifying or preserving behaviours and what the default is.
+
+### 3.2.1 
+
+It's important to understand the distinction between simplifying and preserving subsetting. Simplifying subsets returns the simplest possible data structure that can represent the output, and is useful interactively because it usually gives you what you want. Preserving subsetting keeps the structre of the output the same as the input, and is generally better for programming because the result will always be the same type. Omitting drop = FALSE when subsetting matrices and data frames is one of the most common sources of programming errors. (it will work for your test cases, but then some one will pass in a single column data frame and it will fail in an unexpected and unclear way.)
+
+Unfortunately, how you switch between simplifying and preserving differs for different data types , as summarised in the table below.
+
+vector:
+simplifying: x[[1]]
+preserving: x[1]
+
+list:
+simplifying: x[[1]]
+preserving: x[1]
+
+factor:
+simplifying: x[1:4, drop = T]
+preserving: x[1:4]
+
+array:
+simplifying: x[1,] or x[,]
+preserving: x[1,, drop = F] or x[,1,drop=T]
+
+data frame:
+simplifying: x[,1] or x[[1]]
+preserving: x[,1,drop = F] or x[1]
