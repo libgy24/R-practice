@@ -639,7 +639,254 @@ vals</code></pre>
 <div id="data-frames-1" class="section level3">
 <h3>3.1.4 Data frames</h3>
 <p>Data frames posses the characteristics of both lists and matrices: if you subset with a single vector, they behave like lists; if you subset with two vectors, they bechave like matrices.</p>
+<pre class="r"><code>df &lt;- data.frame(x = 1:3, y = 3:1, z = letters[1:3])
+
+df </code></pre>
+<pre><code>##   x y z
+## 1 1 3 a
+## 2 2 2 b
+## 3 3 1 c</code></pre>
+<pre class="r"><code>df[df$x==2]</code></pre>
+<pre><code>##   y
+## 1 3
+## 2 2
+## 3 1</code></pre>
+<pre class="r"><code>df[c(1,3),]</code></pre>
+<pre><code>##   x y z
+## 1 1 3 a
+## 3 3 1 c</code></pre>
+<pre class="r"><code># there are two ways to select columns froma data frame
+# like a list
+
+df[c('x','z')]</code></pre>
+<pre><code>##   x z
+## 1 1 a
+## 2 2 b
+## 3 3 c</code></pre>
+<pre class="r"><code>#like a matrix
+df[,c('x','z')]</code></pre>
+<pre><code>##   x z
+## 1 1 a
+## 2 2 b
+## 3 3 c</code></pre>
+<pre class="r"><code># there is an important difference if you select a single column: matrix subsetting simplifies by default, list subsetting does not.
+
+df['x']</code></pre>
+<pre><code>##   x
+## 1 1
+## 2 2
+## 3 3</code></pre>
+<pre class="r"><code>str(df['x'])</code></pre>
+<pre><code>## 'data.frame':    3 obs. of  1 variable:
+##  $ x: int  1 2 3</code></pre>
+<pre class="r"><code>df[,'x']</code></pre>
+<pre><code>## [1] 1 2 3</code></pre>
+<pre class="r"><code>str(df[,'x'])</code></pre>
+<pre><code>##  int [1:3] 1 2 3</code></pre>
 </div>
+<div id="s3-objects" class="section level3">
+<h3>3.1.5 S3 objects</h3>
+<p>S3 objects are made up of atomic vectors, arrays, and lists, so you can always pull apart an S3 object using techniques described above and the knowledge you gain from str().</p>
+</div>
+<div id="s4-objects" class="section level3">
+<h3>3.1.6 S4 objects</h3>
+<p>There are also two additional subsetting operators that are needed for S4 objects: @(equivalent to $) and slot() (equivalent to [[). @ is more restrictive than $ in that it wil return an error if the slot does not exist. These are described in more detail in Section 7.3</p>
+</div>
+</div>
+<div id="subsetting-operators" class="section level2">
+<h2>3.2 Subsetting operators</h2>
+<p>There are two other subsetting operators. [[ and $. [[ is similar to [, except it can only return a single value and it allows you to pull pieces out of a list. $ is a useful shorthand for [[ combined with character subsetting.</p>
+<p>You need [[ when owrking with lists. This is because when [ is applied to a list it always returns a list: it never gives yu the contents of the list. To get the contents , you need [[:</p>
+<p>“If list x is a train carring objects, then x[[5]] is the object in car 5; x[4:6] is a train of cars 4-6” –RLangTip</p>
+<p>Because it can return only a single value, you must use [[ with either a single positive integer or a string:</p>
+<pre class="r"><code>a&lt;-list(a = 1, b = 2)
+a[[1]]</code></pre>
+<pre><code>## [1] 1</code></pre>
+<pre class="r"><code># if you do supply a vector it indexes recursively 
+
+b&lt;- list(a = list(b = list(c= list(d = 1))))
+
+b[[c('a','b','c','d')]]</code></pre>
+<pre><code>## [1] 1</code></pre>
+<pre class="r"><code># same as
+ b[['a']][['b']][['c']][['d']]</code></pre>
+<pre><code>## [1] 1</code></pre>
+<p>Because data frames are lists of columns, you can use [[ to extract a column from data frames: mtcars[[1]], mtcars[[‘cyl’]].</p>
+<p>S3 and S4 objects can override the standard behaviour of [ and [[ so they behave differently for different types of objects. The key difference is usually how you select between simplifying or preserving behaviours and what the default is.</p>
+<div id="section" class="section level3">
+<h3>3.2.1</h3>
+<p>It’s important to understand the distinction between simplifying and preserving subsetting. Simplifying subsets returns the simplest possible data structure that can represent the output, and is useful interactively because it usually gives you what you want. Preserving subsetting keeps the structre of the output the same as the input, and is generally better for programming because the result will always be the same type. Omitting drop = FALSE when subsetting matrices and data frames is one of the most common sources of programming errors. (it will work for your test cases, but then some one will pass in a single column data frame and it will fail in an unexpected and unclear way.)</p>
+<p>Unfortunately, how you switch between simplifying and preserving differs for different data types , as summarised in the table below.</p>
+<p>vector: simplifying: x[[1]] preserving: x[1]</p>
+<p>list: simplifying: x[[1]] preserving: x[1]</p>
+<p>factor: simplifying: x[1:4, drop = T] preserving: x[1:4]</p>
+<p>array: simplifying: x[1,] or x[,] preserving: x[1,, drop = F] or x[,1,drop=T]</p>
+<p>data frame: simplifying: x[,1] or x[[1]] preserving: x[,1,drop = F] or x[1]</p>
+<p>Preserving is the same for all data types: you get the same type of output as input. Simplifying behaviour varies slightly between different data types, as described below</p>
+<pre class="r"><code># atomic vector: removes names.
+
+x&lt;-c(a = 1, b = 2)
+
+x[1]</code></pre>
+<pre><code>## a 
+## 1</code></pre>
+<pre class="r"><code>str(x[1])</code></pre>
+<pre><code>##  Named num 1
+##  - attr(*, &quot;names&quot;)= chr &quot;a&quot;</code></pre>
+<pre class="r"><code>x[[1]]</code></pre>
+<pre><code>## [1] 1</code></pre>
+<pre class="r"><code>str(x[[1]])</code></pre>
+<pre><code>##  num 1</code></pre>
+<pre class="r"><code>#List: return the object inside the list, not a single element list.
+
+y&lt;-list(a = 1, b = 2)
+
+y[1]</code></pre>
+<pre><code>## $a
+## [1] 1</code></pre>
+<pre class="r"><code>str(y[1])</code></pre>
+<pre><code>## List of 1
+##  $ a: num 1</code></pre>
+<pre class="r"><code>y[[1]]</code></pre>
+<pre><code>## [1] 1</code></pre>
+<pre class="r"><code>str(y[[1]])</code></pre>
+<pre><code>##  num 1</code></pre>
+<pre class="r"><code>#Factor: drops any unused levels:
+
+z&lt;-factor(c('a','b'))
+z[1]</code></pre>
+<pre><code>## [1] a
+## Levels: a b</code></pre>
+<pre class="r"><code>str(z[1])</code></pre>
+<pre><code>##  Factor w/ 2 levels &quot;a&quot;,&quot;b&quot;: 1</code></pre>
+<pre class="r"><code>z[1,drop = T]</code></pre>
+<pre><code>## [1] a
+## Levels: a</code></pre>
+<pre class="r"><code>str(z[1,drop =T])</code></pre>
+<pre><code>##  Factor w/ 1 level &quot;a&quot;: 1</code></pre>
+<pre class="r"><code># Matrix or array: if any of the dimensions has length 1, drops that dimensions.
+
+a&lt;-matrix(1:4, nrow = 2)
+a</code></pre>
+<pre><code>##      [,1] [,2]
+## [1,]    1    3
+## [2,]    2    4</code></pre>
+<pre class="r"><code>a[1,,drop = F]</code></pre>
+<pre><code>##      [,1] [,2]
+## [1,]    1    3</code></pre>
+<pre class="r"><code>str(a[1,,drop = F])</code></pre>
+<pre><code>##  int [1, 1:2] 1 3</code></pre>
+<pre class="r"><code>a[1,]</code></pre>
+<pre><code>## [1] 1 3</code></pre>
+<pre class="r"><code>str(a[1,])</code></pre>
+<pre><code>##  int [1:2] 1 3</code></pre>
+<pre class="r"><code>#Data frame: if output is a single colukn, returns a vector instead of a dataframe
+
+df&lt;-data.frame(a = 1:2,b =1:2)
+df</code></pre>
+<pre><code>##   a b
+## 1 1 1
+## 2 2 2</code></pre>
+<pre class="r"><code>df[1]</code></pre>
+<pre><code>##   a
+## 1 1
+## 2 2</code></pre>
+<pre class="r"><code>str(df[1])</code></pre>
+<pre><code>## 'data.frame':    2 obs. of  1 variable:
+##  $ a: int  1 2</code></pre>
+<pre class="r"><code>df[[1]]</code></pre>
+<pre><code>## [1] 1 2</code></pre>
+<pre class="r"><code>str(df[[1]])</code></pre>
+<pre><code>##  int [1:2] 1 2</code></pre>
+<pre class="r"><code>df[,'a',drop = F]</code></pre>
+<pre><code>##   a
+## 1 1
+## 2 2</code></pre>
+<pre class="r"><code>str(df[,'a',drop=F])</code></pre>
+<pre><code>## 'data.frame':    2 obs. of  1 variable:
+##  $ a: int  1 2</code></pre>
+<pre class="r"><code>df[,'a']</code></pre>
+<pre><code>## [1] 1 2</code></pre>
+<pre class="r"><code>str(df[,'a'])</code></pre>
+<pre><code>##  int [1:2] 1 2</code></pre>
+</div>
+<div id="section-1" class="section level3">
+<h3>3.2.2 $</h3>
+<p>$ is a shorthand operator , where x<span class="math inline">\(y is equivalent to x[['y',exact = F]]. It's often used to access variable in a data frame, as in mtcars\)</span>cyl or diamonds$carat.</p>
+<p>One common mistake with $ is to try and use it when you have the name of a column stored in a variables:</p>
+<p>Var&lt;-‘cyl’</p>
+<p>Doesn’t work - matcars$var translated to mtcars[[‘var’]]</p>
+<p>instead use [[</p>
+<p>mtcars[[var]] There is one important difference between $ and [[. $ does partial matching:</p>
+<pre class="r"><code>x&lt;-list(abc = 1)
+
+x$a</code></pre>
+<pre><code>## [1] 1</code></pre>
+<pre class="r"><code>x[['a']]</code></pre>
+<pre><code>## NULL</code></pre>
+<p>If you want to avoid this behaviour you can get the global option warPartialMatchDollar to TRUE. Use with caution: It may behaviour in other code you have loaded.</p>
+</div>
+<div id="missingout-of-bounds-indices" class="section level3">
+<h3>3.2.3 Missing/out of bounds indices</h3>
+<p>[ and [[ differ slightly in their behaviour when the index is out of bounds (OOB), for example, when you try to extract the fifth element of a length four, or subset a vector with NA or NULl.</p>
+<pre class="r"><code>x&lt;-1:4
+
+str(x[5])</code></pre>
+<pre><code>##  int NA</code></pre>
+<pre class="r"><code>str(x[NA_real_])</code></pre>
+<pre><code>##  int NA</code></pre>
+<pre class="r"><code>str(x[NULL])</code></pre>
+<pre><code>##  int(0)</code></pre>
+</div>
+</div>
+<div id="subsetting-and-assignment" class="section level2">
+<h2>3.3 Subsetting and assignment</h2>
+<p>All subsetting operators can be combined with assignemnt to modify selected values of the input vector.</p>
+<pre class="r"><code>x&lt;-1:5
+
+x[c(1,2)]&lt;-2:3
+x</code></pre>
+<pre><code>## [1] 2 3 3 4 5</code></pre>
+<pre class="r"><code># The length of the LHS needs to match the RHS
+
+x[-1]&lt;-4:1
+x</code></pre>
+<pre><code>## [1] 2 4 3 2 1</code></pre>
+<pre class="r"><code># Note that there's no checking for duplicate indices
+x[c(1,1)]&lt;-2:3
+x</code></pre>
+<pre><code>## [1] 3 4 3 2 1</code></pre>
+<pre class="r"><code># you can't combine integer indices with NA
+x[c(1,NA)]&lt;-2:3</code></pre>
+<pre><code>## Error in x[c(1, NA)] &lt;- 2:3: NAs are not allowed in subscripted assignments</code></pre>
+<pre class="r"><code># But you can combine logical indices with NA (where they're treated as false)
+
+x[c(T,F,NA)]&lt;-1
+
+# This is mostly useful when conditionally modifying vectors
+
+df&lt;-data.frame(a = c(1,10,NA))
+df$a[df$a&lt;5]&lt;-0
+df$a</code></pre>
+<pre><code>## [1]  0 10 NA</code></pre>
+<p>Subsetting with nothing can be useful in conjunction with asignment because it will preserve the original object calss and structure. Compare the following two expressions. In the first, mtcars will remain as a data frame. In the second mtcars will become a list.</p>
+<p>mtcars[] &lt;- lapply(mtcars, as.integer) mtcars&lt;lapply(mtcars, as.integer)</p>
+<p>With lists, you can use subsetting + assignment + NULL remove components from a list. To add a literal NULL to a list, use [ and list(NULL):</p>
+<pre class="r"><code>x&lt;-list(a = 1, b=2)
+
+x[['b']]&lt;-NULL
+
+str(x)</code></pre>
+<pre><code>## List of 1
+##  $ a: num 1</code></pre>
+<pre class="r"><code>y&lt;-list(a = 1)
+
+y['b']&lt;-list(NULL)
+
+str(y)</code></pre>
+<pre><code>## List of 2
+##  $ a: num 1
+##  $ b: NULL</code></pre>
 </div>
 </div>
 
