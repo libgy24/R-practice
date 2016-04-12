@@ -888,6 +888,575 @@ str(y)</code></pre>
 ##  $ a: num 1
 ##  $ b: NULL</code></pre>
 </div>
+<div id="applications" class="section level2">
+<h2>3.4 Applications</h2>
+<p>The basic priciples described above give rise to a wide variety of useful applications. Some of the most important are described below. Many of these basic techniques are wrapped up into more concise functions(e.g.subset(), merge(), plyr::arrange()), but it is useful to understand how they are implemented with basic subsetting. This will allow you to adapt to new situations that are not dealt with by existing functions.</p>
+<div id="lookup-tablescharacter-subsetting" class="section level3">
+<h3>3.4.1 Lookup tables(character subsetting)</h3>
+<p>Character matching provides a powerful way to make lookup tables. Say you want to convert abbreviations:</p>
+<pre class="r"><code>x&lt;-c('m','f','u','f','f','m','m')
+lookup&lt;-c(m='Male',f = 'Female', u = NA)
+lookup</code></pre>
+<pre><code>##        m        f        u 
+##   &quot;Male&quot; &quot;Female&quot;       NA</code></pre>
+<pre class="r"><code>lookup[x]</code></pre>
+<pre><code>##        m        f        u        f        f        m        m 
+##   &quot;Male&quot; &quot;Female&quot;       NA &quot;Female&quot; &quot;Female&quot;   &quot;Male&quot;   &quot;Male&quot;</code></pre>
+<pre class="r"><code>unname(lookup[x])</code></pre>
+<pre><code>## [1] &quot;Male&quot;   &quot;Female&quot; NA       &quot;Female&quot; &quot;Female&quot; &quot;Male&quot;   &quot;Male&quot;</code></pre>
+<pre class="r"><code>#or with fewer output values 
+c(m = 'known', f = 'known', u = 'unknown')[x]</code></pre>
+<pre><code>##         m         f         u         f         f         m         m 
+##   &quot;known&quot;   &quot;known&quot; &quot;unknown&quot;   &quot;known&quot;   &quot;known&quot;   &quot;known&quot;   &quot;known&quot;</code></pre>
+<p>If you don’t want names in the result, use unname() to remove them.</p>
+</div>
+<div id="matching-and-merging-by-hand-integer-subsetting" class="section level3">
+<h3>3.4.2 Matching and merging by hand (integer subsetting)</h3>
+<p>You may have a more complicated lookup table which has multiple columns of information. SUppose we have a vector of integer grades, and a table that describes their properties:</p>
+<pre class="r"><code>grades&lt;-c(1,2,2,3,1)
+
+info &lt;- data.frame(grade = 3:1,
+                   desc = c('Excellent','Good','Poor'),
+                   fail = c(F,F,T))</code></pre>
+<p>We want to duplicate the info table so that we have a row for each value in grades. We can do this in two ways, either using match() and integer subsetting, or rownames() and character subsetting:</p>
+<pre class="r"><code>id &lt;- match(grades, info$grade)
+id</code></pre>
+<pre><code>## [1] 3 2 2 1 3</code></pre>
+<pre class="r"><code>info[id,]</code></pre>
+<pre><code>##     grade      desc  fail
+## 3       1      Poor  TRUE
+## 2       2      Good FALSE
+## 2.1     2      Good FALSE
+## 1       3 Excellent FALSE
+## 3.1     1      Poor  TRUE</code></pre>
+</div>
+<div id="random-samplesbootstrap-integer-subsetting" class="section level3">
+<h3>3.4.3 Random samples/bootstrap (integer subsetting)</h3>
+<p>You can use integer indices to perform random sampling or bootstraping of a vector or data frame. sample() generates a vector of indices, then subsetting to access the values:</p>
+<pre class="r"><code>df&lt;-data.frame(x = rep(1:3, each =2), y = 6:1, z = letters[1:6])
+
+# set seed for reproducibility
+
+set.seed(10)
+
+# randomly recorder
+
+df[sample(nrow(df)),]</code></pre>
+<pre><code>##   x y z
+## 4 2 3 d
+## 2 1 5 b
+## 5 3 2 e
+## 3 2 4 c
+## 1 1 6 a
+## 6 3 1 f</code></pre>
+<pre class="r"><code># select 3 random rows
+
+df[sample(nrow(df),3),]</code></pre>
+<pre><code>##   x y z
+## 2 1 5 b
+## 6 3 1 f
+## 3 2 4 c</code></pre>
+<pre class="r"><code># select 6 bootstrap replicates
+
+df[sample(nrow(df),6,rep = T),]</code></pre>
+<pre><code>##     x y z
+## 3   2 4 c
+## 4   2 3 d
+## 4.1 2 3 d
+## 1   1 6 a
+## 4.2 2 3 d
+## 3.1 2 4 c</code></pre>
+<p>The arguments of sample() control the number of samples to extract, and whether sampling is performed with or without replacement.</p>
+</div>
+<div id="ordering-integer-subsetting" class="section level3">
+<h3>3.4.4 Ordering (integer subsetting)</h3>
+<p>order() takes a vector as input and returns an integer vector describing how the subsetted vectore should be ordered:</p>
+<pre class="r"><code>x&lt;-c('b','c','a')
+
+order(x)</code></pre>
+<pre><code>## [1] 3 1 2</code></pre>
+<pre class="r"><code>x[order(x)]</code></pre>
+<pre><code>## [1] &quot;a&quot; &quot;b&quot; &quot;c&quot;</code></pre>
+<p>To break ties, you can supply additional variables to order(), and you can change from ascending to descending order using decreasing = TRUE. By default, any missing values will be put at the end of the vector; however, you can remove them with na.last = NA or put at the front with na.last = FALSE.</p>
+<p>For two or more dimensions, order() and integer subsetting makes it easy to order either the rows or columns of an object:</p>
+<pre class="r"><code>df2&lt;-df[sample(nrow(df)),3:1]
+df2</code></pre>
+<pre><code>##   z y x
+## 3 c 4 2
+## 1 a 6 1
+## 2 b 5 1
+## 4 d 3 2
+## 6 f 1 3
+## 5 e 2 3</code></pre>
+<pre class="r"><code>df2[order(df2$x),]</code></pre>
+<pre><code>##   z y x
+## 1 a 6 1
+## 2 b 5 1
+## 3 c 4 2
+## 4 d 3 2
+## 6 f 1 3
+## 5 e 2 3</code></pre>
+<pre class="r"><code>df2[,order(names(df2))]</code></pre>
+<pre><code>##   x y z
+## 3 2 4 c
+## 1 1 6 a
+## 2 1 5 b
+## 4 2 3 d
+## 6 3 1 f
+## 5 3 2 e</code></pre>
+<p>MOre concise, but less flexible, functions are avaiable for sorting vectors, sort(), and data frames, plyr:: arrange().</p>
+</div>
+<div id="expanding-aggregated-counts-integer-subsetting" class="section level3">
+<h3>3.4.5 Expanding aggregated counts (integer subsetting)</h3>
+<p>Sometimes you get a data frame where identical rows have been collapsed into one and a count column has been added. rep() and integer subsetting make it easy to uncollapse the data by subsetting with a repeasted row index:</p>
+<pre class="r"><code>df&lt;-data.frame(x = c(2,4,1), y = c(9,11,6),n = c(3,5,1))
+rep(1:nrow(df),df$n)</code></pre>
+<pre><code>## [1] 1 1 1 2 2 2 2 2 3</code></pre>
+<pre class="r"><code>df[rep(1:nrow(df),df$n),]</code></pre>
+<pre><code>##     x  y n
+## 1   2  9 3
+## 1.1 2  9 3
+## 1.2 2  9 3
+## 2   4 11 5
+## 2.1 4 11 5
+## 2.2 4 11 5
+## 2.3 4 11 5
+## 2.4 4 11 5
+## 3   1  6 1</code></pre>
+</div>
+<div id="removing-columns-from-data-frames-character-subsetting" class="section level3">
+<h3>3.4.6 Removing columns from data frames (character subsetting)</h3>
+<p>There are two ways to remove columns from a data frame. You can set individual columsn to NULL:</p>
+<pre class="r"><code>df &lt;- data.frame(x = 1:3, y = 3:1, z = letters[1:3])
+
+df$z&lt;-NULL
+
+df</code></pre>
+<pre><code>##   x y
+## 1 1 3
+## 2 2 2
+## 3 3 1</code></pre>
+<p>Or you can subset to return only the columns you want:</p>
+<pre class="r"><code>df&lt;-data.frame(x = 1:3, y = 3:1, z = letters[1:3])
+
+df[c('x','y')]</code></pre>
+<pre><code>##   x y
+## 1 1 3
+## 2 2 2
+## 3 3 1</code></pre>
+<p>If you know the columns you don’t want, use set operations to work out which columns to keep:</p>
+<pre class="r"><code>df[setdiff(names(df),'z')]</code></pre>
+<pre><code>##   x y
+## 1 1 3
+## 2 2 2
+## 3 3 1</code></pre>
+</div>
+<div id="selecting-rows-based-on-a-condition-logical-subsetting" class="section level3">
+<h3>3.4.7 Selecting rows based on a condition (logical subsetting)</h3>
+<p>Because it allows you to easily combine conditions from multiple columns, logical subsetting is probably the most commonly used technique for extracting rows out of a data frame.</p>
+<pre class="r"><code>mtcars[mtcars$gear == 5,]</code></pre>
+<pre><code>##                 mpg cyl  disp  hp drat    wt qsec vs am gear carb
+## Porsche 914-2  26.0   4 120.3  91 4.43 2.140 16.7  0  1    5    2
+## Lotus Europa   30.4   4  95.1 113 3.77 1.513 16.9  1  1    5    2
+## Ford Pantera L 15.8   8 351.0 264 4.22 3.170 14.5  0  1    5    4
+## Ferrari Dino   19.7   6 145.0 175 3.62 2.770 15.5  0  1    5    6
+## Maserati Bora  15.0   8 301.0 335 3.54 3.570 14.6  0  1    5    8</code></pre>
+<pre class="r"><code>mtcars[mtcars$gear == 5 &amp; mtcars$cyl == 4,]</code></pre>
+<pre><code>##                mpg cyl  disp  hp drat    wt qsec vs am gear carb
+## Porsche 914-2 26.0   4 120.3  91 4.43 2.140 16.7  0  1    5    2
+## Lotus Europa  30.4   4  95.1 113 3.77 1.513 16.9  1  1    5    2</code></pre>
+<p>Remember to use the vector boolean operators &amp; and |, not the shortcircuiting scalar &amp;&amp; and || which are more useful inside if statements. Don’t foget De Morgan’s laws, whcih can be useful to simplify negations:</p>
+<p>!(X &amp; Y) is the same as !X | !Y !(X | Y) is the same as !X &amp; !Y</p>
+<p>For example, !(X &amp; !(Y | Z)) simplifies to !X | !!(Y | Z), and then to !X | Y | Z.</p>
+<p>subset() is a specilised shorthand function for subsetting data frame and saves some typing because you don’t need to repeat the name of the data frame. You’ll leanr how it works in Chapter 13.</p>
+<pre class="r"><code>subset(mtcars, gear ==5)</code></pre>
+<pre><code>##                 mpg cyl  disp  hp drat    wt qsec vs am gear carb
+## Porsche 914-2  26.0   4 120.3  91 4.43 2.140 16.7  0  1    5    2
+## Lotus Europa   30.4   4  95.1 113 3.77 1.513 16.9  1  1    5    2
+## Ford Pantera L 15.8   8 351.0 264 4.22 3.170 14.5  0  1    5    4
+## Ferrari Dino   19.7   6 145.0 175 3.62 2.770 15.5  0  1    5    6
+## Maserati Bora  15.0   8 301.0 335 3.54 3.570 14.6  0  1    5    8</code></pre>
+<pre class="r"><code>subset(mtcars, gear == 5 &amp; cyl == 4)</code></pre>
+<pre><code>##                mpg cyl  disp  hp drat    wt qsec vs am gear carb
+## Porsche 914-2 26.0   4 120.3  91 4.43 2.140 16.7  0  1    5    2
+## Lotus Europa  30.4   4  95.1 113 3.77 1.513 16.9  1  1    5    2</code></pre>
+</div>
+<div id="boolean-algebra-vs.sets-logical-integer-subsetting" class="section level3">
+<h3>3.4.8 Boolean algebra vs. sets (logical &amp; integer subsetting)</h3>
+<p>It’s useful to be aware of the natural equivalence between set operations (integer subsetting) and boolean algebra (logical subsetting). Using set operations is more effective when:</p>
+<ol style="list-style-type: decimal">
+<li>You want to find the first (or last) TRUE.</li>
+<li>You have very few TRUEs and very many FALSEs; a set representation may be faster and require less storage.</li>
+</ol>
+<p>Which() allows you to convert a boolean representation to an integer representation. There’s no reverse operation in Base R but we can easily create one:</p>
+<pre class="r"><code>x&lt;-sample(10)&lt;4
+x</code></pre>
+<pre><code>##  [1] FALSE FALSE  TRUE FALSE FALSE FALSE  TRUE FALSE FALSE  TRUE</code></pre>
+<pre class="r"><code>which(x)</code></pre>
+<pre><code>## [1]  3  7 10</code></pre>
+<pre class="r"><code>unwhich&lt;-function(x,n){
+  out&lt;-rep_len(FALSE,n)
+  out[x]&lt;-TRUE
+  out
+}
+unwhich(which(x),10)</code></pre>
+<pre><code>##  [1] FALSE FALSE  TRUE FALSE FALSE FALSE  TRUE FALSE FALSE  TRUE</code></pre>
+<p>Let’s create two logical vectors and their integer integer equivalents and then explore the relationship between boolean and set operations.</p>
+<pre class="r"><code>(x1&lt;-1:10 %% 2 ==0)</code></pre>
+<pre><code>##  [1] FALSE  TRUE FALSE  TRUE FALSE  TRUE FALSE  TRUE FALSE  TRUE</code></pre>
+<pre class="r"><code>(x2&lt;-which(x1))</code></pre>
+<pre><code>## [1]  2  4  6  8 10</code></pre>
+<pre class="r"><code>(y1&lt;-1:10 %% 5 == 0)</code></pre>
+<pre><code>##  [1] FALSE FALSE FALSE FALSE  TRUE FALSE FALSE FALSE FALSE  TRUE</code></pre>
+<pre class="r"><code>(y2&lt;-which(y1))</code></pre>
+<pre><code>## [1]  5 10</code></pre>
+<pre class="r"><code>x1 &amp; y1</code></pre>
+<pre><code>##  [1] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE  TRUE</code></pre>
+<pre class="r"><code>intersect(x2, y2)</code></pre>
+<pre><code>## [1] 10</code></pre>
+<pre class="r"><code>x1 | y1</code></pre>
+<pre><code>##  [1] FALSE  TRUE FALSE  TRUE  TRUE  TRUE FALSE  TRUE FALSE  TRUE</code></pre>
+<pre class="r"><code>union(x2, y2)</code></pre>
+<pre><code>## [1]  2  4  6  8 10  5</code></pre>
+<pre class="r"><code>x1 &amp;! y1</code></pre>
+<pre><code>##  [1] FALSE  TRUE FALSE  TRUE FALSE  TRUE FALSE  TRUE FALSE FALSE</code></pre>
+<pre class="r"><code>setdiff(x2, y2)</code></pre>
+<pre><code>## [1] 2 4 6 8</code></pre>
+<pre class="r"><code>xor(x1,y1)</code></pre>
+<pre><code>##  [1] FALSE  TRUE FALSE  TRUE  TRUE  TRUE FALSE  TRUE FALSE FALSE</code></pre>
+<pre class="r"><code>setdiff(union(x2,y2),intersect(x2,y2))</code></pre>
+<pre><code>## [1] 2 4 6 8 5</code></pre>
+<p>When first learning subsetting, a common mistake is to use x[which(y)] instead of x[y]. Here the whihc() achieves nothing: it switches from logical to integer subsetting but the result will be exactly the same. Also beware that x[-which(y)] is not equivalent to x[!y]: if y is all FALSE, which(y) will be integer(0) and -integer(0) is still integer(0), so you’ll get no values, instead of all values. In general, avoid switching from logical to integer subsetting unless you want, for example, the first or last TRUE value.</p>
+</div>
+</div>
+</div>
+<div id="vocabulary" class="section level1">
+<h1>4. Vocabulary</h1>
+<p>An important part of being fluent in R is having a good working vocabulary. Below, I have listed the functions that I believe constitute such a vocabulary. You don’t need to be intimately familiar with the detail of every function, but you should at least be aware that thaey all exist. If there are functions in the list that you’ve never heard of , I strongly recommend that you read their documentation.</p>
+<p>I came up with this list by looking through all the functions in the base, stats and utils packages, and extracting those that I think are most useful. THe list also includes a few pointer to particularly important functions in other packages, and some of the more important options().</p>
+<div id="the-basics" class="section level2">
+<h2>4.1 The basics</h2>
+<div id="the-first-functions-to-learn" class="section level5">
+<h5>1. The first functions to learn</h5>
+<ul>
+<li>?</li>
+<li>str</li>
+</ul>
+</div>
+<div id="important-operators-and-assignment" class="section level5">
+<h5>2. Important operators and assignment</h5>
+<ul>
+<li>%in%, match</li>
+<li>=, &lt;-,&lt;&lt;-</li>
+<li>$, [, [[, head, tail, subset</li>
+<li>with</li>
+<li>assign, get</li>
+</ul>
+</div>
+<div id="comparison" class="section level5">
+<h5>3. Comparison</h5>
+<ul>
+<li>all.equal, indentical</li>
+<li>!=, ==, &gt;, &gt;=, &lt;,&lt;=</li>
+<li>is.na, complete.cases</li>
+<li>is.finite</li>
+</ul>
+</div>
+<div id="math" class="section level5">
+<h5>4. Math</h5>
+<ul>
+<li>*, +, -, /, %%, %/%</li>
+<li>abs, sign</li>
+<li>acos, asin, atan, atan2</li>
+<li>sin, cos, tan</li>
+<li>ceiling, floor, round, trunc, signif</li>
+<li>exp, log, log10, log2, sqrt</li>
+<li>max, min, prod, sum</li>
+<li>summax, cummin, cumprod, cumsum, diff</li>
+<li>pmax, pmin</li>
+<li>range</li>
+<li>mean, median, cor, sd, var</li>
+<li>rle</li>
+</ul>
+</div>
+<div id="functions-to-do-with-functions" class="section level5">
+<h5>5. Functions to do with functions</h5>
+<ul>
+<li>function</li>
+<li>missing</li>
+<li>on.exit</li>
+<li>return, invisible</li>
+</ul>
+</div>
+<div id="logical-sets" class="section level5">
+<h5>6. Logical &amp; sets</h5>
+<ul>
+<li>&amp;, |, !, xor</li>
+<li>all, any</li>
+<li>intersect, union, setdiff, setequal</li>
+<li>which</li>
+</ul>
+</div>
+<div id="vectors-and-matrices" class="section level5">
+<h5>7. Vectors and matrices</h5>
+<p>Automatic coercion rules: character&gt; numeric&gt; logical</p>
+<ul>
+<li>length, dim, ncol, nrow</li>
+<li>cbind, rbind</li>
+<li>names, colnames, rownames</li>
+<li>t</li>
+<li>dig</li>
+<li>sweep</li>
+<li>as.matrix, data.matrix</li>
+</ul>
+</div>
+<div id="making-vectors" class="section level5">
+<h5>8. Making vectors</h5>
+<ul>
+<li>c</li>
+<li>rep,</li>
+<li>rep_len</li>
+<li>seq, seq_len, seq_along</li>
+<li>rev</li>
+<li>sample</li>
+<li>choose, factorial, combn</li>
+<li>(is/as).(character/numeric/logical/…)</li>
+</ul>
+</div>
+<div id="list-data.frames" class="section level5">
+<h5>9. List &amp; data.frames</h5>
+<ul>
+<li>list, unlist</li>
+<li>data.frame, as.data.frame</li>
+<li>split</li>
+<li>expand.grid</li>
+</ul>
+</div>
+<div id="control-flow" class="section level5">
+<h5>10. Control flow</h5>
+<ul>
+<li>if, &amp;&amp;, ||, (short circuiting)</li>
+<li>for, while</li>
+<li>next, break</li>
+<li>switch</li>
+<li>ifelse</li>
+</ul>
+</div>
+<div id="apply-friends" class="section level5">
+<h5>11. Apply &amp; friends</h5>
+<ul>
+<li>lapply, sapply, vapply</li>
+<li>apply</li>
+<li>tapply</li>
+<li>replicate</li>
+</ul>
+</div>
+</div>
+<div id="common-data-structures" class="section level2">
+<h2>4.2 Common data structures</h2>
+<div id="data-time" class="section level5">
+<h5>1. Data time</h5>
+<ul>
+<li>ISOdate, ISOdatetime, strftime, strptime, date</li>
+<li>difftime</li>
+<li>julian, months, quarters, weekdays</li>
+<li>library(lubridate)</li>
+</ul>
+</div>
+<div id="character-manipulation" class="section level5">
+<h5>2. Character manipulation</h5>
+<ul>
+<li>grep, agrep</li>
+<li>gsub</li>
+<li>strsplit</li>
+<li>chartr</li>
+<li>nchar</li>
+<li>tolower, toupper</li>
+<li>substr</li>
+<li>paste</li>
+<li>library(stringr)</li>
+</ul>
+</div>
+<div id="factors-1" class="section level5">
+<h5>3. Factors</h5>
+<ul>
+<li>factor, levels, nlevels</li>
+<li>reorder, relevel</li>
+<li>cut, findInterval</li>
+<li>interaction</li>
+<li>option(stringsASFactors = False)</li>
+</ul>
+</div>
+<div id="array-manipulation" class="section level5">
+<h5>4. Array manipulation</h5>
+<ul>
+<li>array</li>
+<li>dim</li>
+<li>dimnames</li>
+<li>aperm</li>
+<li>library(abind)</li>
+</ul>
+</div>
+</div>
+<div id="statistics" class="section level2">
+<h2>4.3 Statistics</h2>
+<div id="ordeing-and-tabulating" class="section level5">
+<h5>1. Ordeing and tabulating</h5>
+<ul>
+<li>duplicated, unique</li>
+<li>merge</li>
+<li>order, rank, quantile</li>
+<li>sort</li>
+<li>table, ftable</li>
+</ul>
+</div>
+<div id="linear-models" class="section level5">
+<h5>2. Linear models</h5>
+<ul>
+<li>fitted, predict, resid, rstandard</li>
+<li>lm,glm</li>
+<li>hat, influence, measures</li>
+<li>logLik, df, deviance</li>
+<li>formula, ~, I</li>
+<li>anova, coef, confint, vcov</li>
+<li>contrasts</li>
+</ul>
+</div>
+<div id="miscellaneous-tests" class="section level5">
+<h5>3. Miscellaneous tests</h5>
+<ul>
+<li>apropos(‘\.test$’)</li>
+</ul>
+</div>
+<div id="random-variables" class="section level5">
+<h5>4. Random variables</h5>
+<ul>
+<li>(q, p, d, r) * (beta, binom, cauchy, chisq, exp, f, gamma, geom, hyper, lnorm, logis, multinom, nbinom, norm, pois, signrank, t, unif, weibull, wilcox, birthday, tukey)</li>
+</ul>
+</div>
+<div id="matrix-algebra" class="section level5">
+<h5>5. Matrix algebra</h5>
+<ul>
+<li>corssprod, tcrossprod</li>
+<li>eigen, qr, svd,</li>
+<li>%*%, %o%, outer</li>
+<li>rcond</li>
+<li>solve</li>
+</ul>
+</div>
+</div>
+<div id="working-with-r" class="section level2">
+<h2>4.4 WOrking with R</h2>
+<div id="workspace" class="section level5">
+<h5>1. Workspace</h5>
+<ul>
+<li>ls, exists, rm</li>
+<li>getwd, setwd</li>
+<li>q</li>
+<li>source</li>
+<li>install.packages, library, require</li>
+</ul>
+</div>
+<div id="help" class="section level5">
+<h5>2. Help</h5>
+<ul>
+<li>help, ?</li>
+<li>help.search</li>
+<li>apropos</li>
+<li>RSiteSearch</li>
+<li>citation</li>
+<li>demo</li>
+<li>example</li>
+<li>vignette</li>
+</ul>
+</div>
+<div id="debugging" class="section level5">
+<h5>3.Debugging</h5>
+<ul>
+<li>traceback</li>
+<li>browser</li>
+<li>recover</li>
+<li>options(error = )</li>
+<li>stop, warning, message</li>
+<li>tryCatch, try</li>
+</ul>
+</div>
+</div>
+<div id="io" class="section level2">
+<h2>4.5 I/O</h2>
+<div id="output" class="section level5">
+<h5>1. Output</h5>
+<ul>
+<li>print, cat</li>
+<li>message, warning</li>
+<li>dput</li>
+<li>format</li>
+<li>sink, capture.output</li>
+</ul>
+</div>
+<div id="reading-and-writing-data" class="section level5">
+<h5>2. Reading and writing data</h5>
+<ul>
+<li>data</li>
+<li>cout.fields</li>
+<li>read.csv, write.csv</li>
+<li>read.delim, write.delim</li>
+<li>read.fwf</li>
+<li>readLines, writeLines</li>
+<li>readRDS, saveRDS</li>
+<li>load, save</li>
+<li>library(foreign)</li>
+</ul>
+</div>
+<div id="files-and-directories" class="section level5">
+<h5>3. Files and directories</h5>
+<ul>
+<li>dir</li>
+<li>basename, dirname, tools::file_ext</li>
+<li>file.path</li>
+<li>path.expand, normalizePath</li>
+<li>file.choose</li>
+<li>file.copy, file.create, file.remove, file.rename, dir.create</li>
+<li>file.exists, file.info</li>
+<li>tempdir, tempfile</li>
+<li>download.file, library(downloader)</li>
+</ul>
+</div>
+</div>
+</div>
+<div id="style-guide" class="section level1">
+<h1>5. Style guide</h1>
+<p>Good coding style is like using correct punctuation. You can manage without it, but it si sure makes things easier to read. As with styles of punctuation, there are many possible variations. The following guide describes the style that I use (in this book and elsewhere). It is based on Google’s R style guide (<a href="https://google.github.io/styleguide/Rguide.xml" class="uri">https://google.github.io/styleguide/Rguide.xml</a>), with a few tweaks. You don’t have to use my style, but you really should use a consistent style.</p>
+<p>GOod style is important because while your code only has one author, it’ll usually have multiple readers. This is especially true when you’re writing code with others. In that case, it’s a good idea to agree on a common style up-front. Since no styles is strictly better than another, working with others may mean that you’ll need to sacrifice some preferred aspects of your style.</p>
+<p>The formatR package, by Yihui Xie, makes it easier to clean up poorly formatted code. It can’t do everything, but it can quickly get your code from terrible to pretty good. Make sure to read the introduction before using it.</p>
+<div id="notation-and-naming" class="section level2">
+<h2>5.1 Notation and naming</h2>
+<div id="file-names" class="section level3">
+<h3>5.1.1 File names</h3>
+<p>File names should be meaningful and end in .R</p>
+<p><strong>Good</strong></p>
+<ul>
+<li>fit-models.R</li>
+<li>utility-functions.R</li>
+</ul>
+<p><strong>Bad</strong></p>
+<ul>
+<li>foo.r</li>
+<li>stuff.r</li>
+</ul>
+<p>If files need to be run in sequence, prefix them with numbers:</p>
+<ul>
+<li>0-download.R</li>
+<li>1-parse.R</li>
+<li>2-explore.R</li>
+</ul>
+</div>
+<div id="object-names" class="section level3">
+<h3>5.1.2 Object names</h3>
+<p>“There are only two hard tings in Computer Sciense: cache invalidation and naming things.” -Phil Karlton</p>
+<p>Variable and function names should be lowercase. Use an underscore(_) to separate words within a name. Generally, vairable names should be nouns and function names should be verbs. Strive for names that are concise and meaning ful(this is not easy!)</p>
+</div>
+</div>
 </div>
 
 
