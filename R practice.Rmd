@@ -1384,7 +1384,7 @@ Use commented lines of - and = to break up your file into easily readable chunks
 
 # 6 Functions
 
-Functions are fundamental building block or R: to master many of the more advanced technique in thsi book, you need a solid foundation in how function work. You've probably already created many R functions, and you're familiar with the basics of how they work. The focus of this chapter is to turn your existing, informal knowledge of functions into a rigorous understanding of what functions are and how they work. You'll see some interesting tricks and techniques in this chapter, but most of what you'll learn will be more important as the building blocks for more advanced techniques.
+Functions are fundamental building block of R: to master many of the more advanced technique in thsi book, you need a solid foundation in how function work. You've probably already created many R functions, and you're familiar with the basics of how they work. The focus of this chapter is to turn your existing, informal knowledge of functions into a rigorous understanding of what functions are and how they work. You'll see some interesting tricks and techniques in this chapter, but most of what you'll learn will be more important as the building blocks for more advanced techniques.
 
 The most important thing to understand about R is that function are objects in their own right. You can work with them exactly the same way you work with any other type of object. This theme will be explored in depth in chapter 10.
 
@@ -1392,15 +1392,15 @@ The most important thing to understand about R is that function are objects in t
 
 All R function have three parts.
 
-** the body(), the code inside the function.
+* the body(), the code inside the function.
 
-** the formals(), the list of arguments which controls how you can call the function.
+* the formals(), the list of arguments which controls how you can call the function.
 
-** the environment(), the 'map' of the location of the function's variables.
+* the environment(), the 'map' of the location of the function's variables.
 
 When you print a function in R, it shows you these three important components. If the environment isn't displayed, it means that the function was created in the global environment. 
 
-```{r, echo = TRUE}
+```{r, echo = TRUE,eval = TRUE}
 
 f <- function(x) x^2 
 
@@ -1609,7 +1609,7 @@ This doesn't work because R relies on lexical scoping to find everythin even the
 
 You can use this same idea to do other things that are extremely ill-advised. For examples, since all of the standard operators in R are functions, you can override them with your own alternatives.
 
-```{r, echo = TRUE}
+```{r, echo = TRUE, eval = TRUE}
 
 '(' <- function(el) {
   if (is.numeric(el) && runif(1) < 0.1) {
@@ -1629,10 +1629,81 @@ This will introduce a particularly pernicious bug: 10% of the time, 1 will be ad
   * Everything that exists is an object.
   * Everything that happens is a function call"
                     ---John Chambers
+
 The previous example of redefining ( works because every operation in R is a function call, whether or not it look like one. This includes infix operators like +, control flow operators like for, if, and while, subsetting operators like [] and $, and even the curly brace {. This means that each pair of statements in the following example is exactly equivalent. Note that ', the backtick, lets you refer to functions or variables that have otherwise reserved or illegal names:
 
+```{r, echo = TRUE}
+x <- 10; y <- 5
+
+x + y
+
+'+'(x, y)
+
+for (i in 1:2) print(i)
+
+'for' (i, 1:2, print(i))
+
+if (i == 1) print("yes!") else print("no.")
+
+'if'(i == 1, print("yes!"), print("no."))
+
+x[3]
+
+'['(x, 3)
+
+{print(1); print(2); print(3)}
+
+'{'(print(1), print(2), print(3))
+
+```
+
+It is possible to override the definitions of these special functions, but this is almost certainly a bad idea. However, there are occasions when it might be useful: it allows you to do somthing that would have otherwise been impossible. For example, this feature makes it possible for the **dplyr** package to translate R expression into SQL expressions. CHapter 15 uses this idea to create domain specific languages that allow you to concisely express new concepts using exising R constructs.
+
+It's more often usefull to treat special functions as ordinary functions. For example, we could use sapply() to add 3 to every element of a list by first defining a function add(), like this:
+
+```{r, echo = TRUE}
+add <- function(x, y) x + y 
+
+sapply(1:10, add, 3)
+```
+
+BUt we can also get the same effect using the built-in + function.
+
+```{r, echo = TRUE}
+sapply(1:4, '+', 3)
+sapply(1:5, "+",3)
+
+```
 
 
+Note the difference between '+' and "+". The first one is the value of the object called +, and the second is a string containing the character +. The second version works because sapply can be given the name of a function instead of the function itself: if you read the source of sapply(), you'll see the first line uses match.fun() to find functions given their names.
 
+A more useful application is to combine lapply() or apply() with subsetting:
+
+```{r, echo = TRUE}
+x <- list(1:3, 4:9, 10:12)
+
+sapply(x,"[",2)
+
+# equivalent to 
+
+sapply(x, function(x)x[2])
+```
+
+Remembering that everything that happens in R is a function call will help you in Chapter 14.
+
+## 6.4 FUnction arguments
+
+It's useful to distinguish between the formal arguments and the actual argument of a function. THe formal arguments are property of the function, whereas the actual or calling arguments can vary each time you call the function. This section discusses how calling arguments are mapped to formal argument, how you can call a function given a list of arguments, how default arguments work, and the impact of lazy evaluation.
+
+### 6.4.1 Calling functions
+
+When calling a function you can specify arguments gby position, by complete name, or by partial name. Arguments are matched first by exact name (perfect matching), then by prefix matching, and finally by position.
+
+```{r, echo = TRUE}
+f <- function(abcdef, bcde = 1, bcde2) {
+  list(a = abcdef, b1 = bcde1, b2 = bcde2)
+}
+```
 
 

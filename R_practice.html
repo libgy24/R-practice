@@ -1528,14 +1528,16 @@ unwhich(which(x),10)</code></pre>
 </div>
 <div id="functions" class="section level1">
 <h1>6 Functions</h1>
-<p>Functions are fundamental building block or R: to master many of the more advanced technique in thsi book, you need a solid foundation in how function work. You’ve probably already created many R functions, and you’re familiar with the basics of how they work. The focus of this chapter is to turn your existing, informal knowledge of functions into a rigorous understanding of what functions are and how they work. You’ll see some interesting tricks and techniques in this chapter, but most of what you’ll learn will be more important as the building blocks for more advanced techniques.</p>
+<p>Functions are fundamental building block of R: to master many of the more advanced technique in thsi book, you need a solid foundation in how function work. You’ve probably already created many R functions, and you’re familiar with the basics of how they work. The focus of this chapter is to turn your existing, informal knowledge of functions into a rigorous understanding of what functions are and how they work. You’ll see some interesting tricks and techniques in this chapter, but most of what you’ll learn will be more important as the building blocks for more advanced techniques.</p>
 <p>The most important thing to understand about R is that function are objects in their own right. You can work with them exactly the same way you work with any other type of object. This theme will be explored in depth in chapter 10.</p>
 <div id="function-components" class="section level2">
 <h2>6.1 Function components</h2>
 <p>All R function have three parts.</p>
-<p>** the body(), the code inside the function.</p>
-<p>** the formals(), the list of arguments which controls how you can call the function.</p>
-<p>** the environment(), the ‘map’ of the location of the function’s variables.</p>
+<ul>
+<li><p>the body(), the code inside the function.</p></li>
+<li><p>the formals(), the list of arguments which controls how you can call the function.</p></li>
+<li><p>the environment(), the ‘map’ of the location of the function’s variables.</p></li>
+</ul>
 <p>When you print a function in R, it shows you these three important components. If the environment isn’t displayed, it means that the function was created in the global environment.</p>
 <pre class="r"><code>f &lt;- function(x) x^2 
 
@@ -1697,12 +1699,51 @@ codetools::findGlobals(f)</code></pre>
 f()</code></pre>
 <pre><code>## Error in f(): could not find function &quot;+&quot;</code></pre>
 <p>This doesn’t work because R relies on lexical scoping to find everythin even the ‘+’ operator. It’s never possible to make a function completely self-contained because you must always rely on functions defined in base R or other packages.</p>
-</div>
-</div>
-<div id="every-operation-is-a-function-call" class="section level2">
-<h2>6.3 Every operation is a function call</h2>
+<p>You can use this same idea to do other things that are extremely ill-advised. For examples, since all of the standard operators in R are functions, you can override them with your own alternatives.</p>
+<pre class="r"><code>'(' &lt;- function(el) {
+  if (is.numeric(el) &amp;&amp; runif(1) &lt; 0.1) {
+    el + 1
+  } else {
+    el
+  }
+}
+
+replicate(50,(1 + 2)) </code></pre>
+<pre><code>##  [1] 4 3 3 3 3 3 3 3 3 3 3 4 3 3 3 4 3 3 3 3 3 3 3 3 3 3 3 3 3 4 3 3 3 3 3
+## [36] 3 3 4 3 4 3 3 3 4 3 3 3 3 3 3</code></pre>
+<pre class="r"><code>rm('(')</code></pre>
+<p>This will introduce a particularly pernicious bug: 10% of the time, 1 will be added to any numeric calculation inside parenthese. This is another good reason to rgularly restart with a clean R session ! ## 6.3 Every operation is a function call</p>
 <p>“To understand computations in R, two slogans are helpful: * Everything that exists is an object. * Everything that happens is a function call” —John Chambers</p>
-<p>&quot;</p>
+<p>The previous example of redefining ( works because every operation in R is a function call, whether or not it look like one. This includes infix operators like +, control flow operators like for, if, and while, subsetting operators like [] and $, and even the curly brace {. This means that each pair of statements in the following example is exactly equivalent. Note that ’, the backtick, lets you refer to functions or variables that have otherwise reserved or illegal names:</p>
+<pre class="r"><code>x &lt;- 10; y &lt;- 5
+
+x + y</code></pre>
+<pre><code>## [1] 15</code></pre>
+<pre class="r"><code>'+'(x, y)</code></pre>
+<pre><code>## [1] 15</code></pre>
+<pre class="r"><code>for (i in 1:2) print(i)</code></pre>
+<pre><code>## [1] 1
+## [1] 2</code></pre>
+<pre class="r"><code>'for' (i, 1:2, print(i))</code></pre>
+<pre><code>## [1] 1
+## [1] 2</code></pre>
+<pre class="r"><code>if (i == 1) print(&quot;yes!&quot;) else print(&quot;no.&quot;)</code></pre>
+<pre><code>## [1] &quot;no.&quot;</code></pre>
+<pre class="r"><code>'if'(i == 1, print(&quot;yes!&quot;), print(&quot;no.&quot;))</code></pre>
+<pre><code>## [1] &quot;no.&quot;</code></pre>
+<pre class="r"><code>x[3]</code></pre>
+<pre><code>## [1] NA</code></pre>
+<pre class="r"><code>'['(x, 3)</code></pre>
+<pre><code>## [1] NA</code></pre>
+<pre class="r"><code>{print(1); print(2); print(3)}</code></pre>
+<pre><code>## [1] 1
+## [1] 2
+## [1] 3</code></pre>
+<pre class="r"><code>'{'(print(1), print(2), print(3))</code></pre>
+<pre><code>## [1] 1
+## [1] 2
+## [1] 3</code></pre>
+</div>
 </div>
 </div>
 
