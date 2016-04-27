@@ -1283,4 +1283,356 @@ Where possible, avoid using names of existing functions and variables, This will
 
 ### 5.2.1 Spacing
 
-Place spaces around all infix operators(=, +, -, <-,etc.)
+Place spaces around all infix operators(=, +, -, <-,etc.). The same rule applies when using = in function calls. Always put a space after a comma, and never before (just like in regular English).
+
+**Good**
+average <- mean(feet / 12 + inches, na.rm = TRUE)
+
+**Bad**
+average<-mean(feet/12+inches, na.rm=TRUE)
+
+There is a small exception to this rule: :, :: and ::: don't need spaces around them.
+
+**Good**
+x <- 1:10
+
+**Bad**
+x <-1 : 10
+
+Place a space before left parentheses, except in a function call.
+
+**Good**
+if (debug) do(x)
+plot(x, y)
+
+**Bad**
+if(debug)do(x)
+plot (x, y)
+
+Extra spacing (i.e., more than oen sapce in a row) is ok if it improves alignment of equal signs or asignments(<-).
+
+list(
+  total = a + b + c 
+  mean = (a + b + c) / n
+)
+
+Do not place spaces around code in parentheses or square brackets, unless there's a comma, in which case see above).
+
+**Good**
+if (debug) do(x)
+diamonds[5, ]
+
+**Bad**
+if ( debug )  do(x)
+x[1,]
+x[1 ,]
+
+### 5.2.2 Curly braces
+
+An opening curly brace should never go on its own line and should always be followed by a new line. A closing curly brace should always go on its own line, unless it's followed by else.
+
+Always indent the code inside curly braces.
+
+**Good**
+
+if (y < 0 && debug) {
+ message("Y is negative")
+}
+
+if (y == 0) {
+  log(x)
+} else {
+  y ^ x
+}
+
+
+### 5.2.3 Line lenght 
+
+Strive to limit your code to 80 characters per line. This fits comfortably on a printed page with a reasonably sized font. If you find yourself running out of room, this is a good indication that you should encapsulate some of the work in a separate function.
+
+### 5.2.4 Indentiation
+
+When indenting your code, use two spaces. Never use tabs or mix tabs and spaces.
+
+The only exception is if a function definition rusn over multiple lines. In that cases, indent the second line to where the definition starts:
+
+long_function_name <- function(a = 'a long argument',
+                               b = 'another argumnt',
+                               c = 'another long argument') {
+  as usual code is indented by two spaces,                               
+}
+
+### 5.2.5 Assignment 
+
+Use <-, not - , for assigment,
+
+**Good**
+
+x <- 5
+
+**Bad**
+
+x = 5
+
+## 5.3 Organisation 
+
+### 5.3.1 COmmenting guidelines
+
+COmment your code. Each line of a comment should begin with the comment symbol and a single space: #. COmments should explain the why, not the waht.
+
+Use commented lines of - and = to break up your file into easily readable chunks.
+
+# 6 Functions
+
+Functions are fundamental building block or R: to master many of the more advanced technique in thsi book, you need a solid foundation in how function work. You've probably already created many R functions, and you're familiar with the basics of how they work. The focus of this chapter is to turn your existing, informal knowledge of functions into a rigorous understanding of what functions are and how they work. You'll see some interesting tricks and techniques in this chapter, but most of what you'll learn will be more important as the building blocks for more advanced techniques.
+
+The most important thing to understand about R is that function are objects in their own right. You can work with them exactly the same way you work with any other type of object. This theme will be explored in depth in chapter 10.
+
+## 6.1 Function components
+
+All R function have three parts.
+
+** the body(), the code inside the function.
+
+** the formals(), the list of arguments which controls how you can call the function.
+
+** the environment(), the 'map' of the location of the function's variables.
+
+When you print a function in R, it shows you these three important components. If the environment isn't displayed, it means that the function was created in the global environment. 
+
+```{r, echo = TRUE}
+
+f <- function(x) x^2 
+
+formals(f)
+
+body(f)
+
+environment(f)
+```
+
+The assignment forms of boday(), formals(), and environment() can also be used to modify functions. 
+
+Like all objects in R, functions can also possess any number of additional attributes(). One attribute used by base R is "Srcref", short for source reference, which points to the source code used to create the function. Unlike body(), this contains code comments and other formatting. You can also add attributes to a function. For example, you can set the class() and add a custom print() method.
+
+### 6.1.1 Primitive functions
+
+There is one exception to the rule that functions have three components. Primitive functions, like sum(), call C code directly with .Primitive() and contain no R code. Therefore their formals(), body(), and environemnt() are all NULL.
+
+```{r, echo = TRUE}
+body(sum)
+formals(sum)
+environment(sum)
+attributes(sum)
+```
+
+Primitive functions are only found in the base packages, and since they operate at a low level, they can be more efficient (primitive replacement functions don't have to make copies), and can hae different rules for argument mathcing (e.g., switch and call). This, however, comes at a cost of behaving differently from all other functions in R. Hence the R core team generally avoids createing them unless there is no other option.
+
+## 6.2 Lexical scoping
+
+Scoping is the set of rules that govern how R looks up the value of a symbol. In the example below, scoping is the set of rules that R applies to go from the symbol x to its value 10:
+
+```{r, echo = TRUE}
+x <- 10 
+
+x
+```
+
+Understanding scoping allows you to: 
+
+** build tools by composing functions, as described in Chapter 10.
+
+** overrule the usual evaluation rules and do non-standard evaluation, as described in Chapter 13.
+
+R has two types of scoping: **Lexical scoping**, implemented automatically at the language level, and **dynamic scoping**, used in select functions to save typing during interactive analysis. We discuss lexical scoping here because it is intimately tied to function creation. Dynamic scoping is described in more detail in Section 13.3.
+
+Lexical scoping looks up symbol values based on how function were nested when they were created, not how they are nested when they are called. With lexical scoping, you don't need to know how the function is called to figure out where the value of a variable will be looked up. You just need to look at the function's definition.
+
+The 'lexical' in lexical scoping doesn't correspond to the usual English defintion ('of or realting to words or the vocabulary of a language as distinguished from its grammer and construction') but comes from the computer science term 'lexing', which is part of the process that converts code represented as text to meaningful pieces that the programming language understand.
+
+There are four basic principles behind R's implementation of lexical scoping:
+
+* name masking
+* function vs. variables
+* a fresh start
+* dynamic lookup
+
+You probably know many of these principles already, althought you might not have thought about them explicitly. Test your knowledge by mentally running through the code in each block before looking at the answers.
+
+
+### 6.2.1 Name masking
+The following example illustrate the most basic principle of lexical scoping, and you should have no problem predicting the output.
+
+```{r, echo = TRUE}
+f <- function() {
+  x <- 1
+  y <- 1
+  c(x, y)
+}
+f()
+rm(f)
+```
+
+If a name isn't defined inside a function, R will look one level up.
+
+```{r, echo = TRUE}
+x <- 2
+g <- function() {
+  y <- 1
+  c(x, y)
+}
+g()
+rm(x, g)
+```
+
+The same rules apply if a function is defined inside another function: look inside the current function, then where that function was defined, and so on, all the way up to the global environment, and then on to other loaded packages. Run the following code in you head, then confirm the output by running the R code.
+
+```{r, echo = TRUE}
+x <- 1
+
+h <- function() {
+  y <- 2
+  i <- function() {
+    z <- 3
+    c(x, y, z)
+  }
+  i()
+}
+h()
+rm(x, h)
+```
+
+The same rules apply to closure, functions created by other functions. Closures will be described in more detail in Chapter 10; here we'll just look at how they interact with scoping. The following function, j(), returns a function. What do you thing this function will return when we call it?
+
+```{r, echo = TRUE}
+j <- function(x) {
+  y <- 2
+  function() {
+    c(x, y)
+  }
+}
+
+k <- j(1)
+k()
+rm(j, k)
+```
+
+This seems a little magical (how does R know what the value of y is after the function has been called). It works because k preserves the environment in which it was defined and because the environment includes the value of y. Chapter 8 gives some pointers on how you can dive in and figure out what values are stored in the environment associated with each function.
+
+### 6.2.2 Functions vs. variables
+
+The same principles apply regardless of the type of associated value finding functions works exactly the same way as finding variables:
+
+```{r, echo = TRUE}
+l <- function(x) x + 1 
+m <- function() {
+  l <- function(x) x * 2 
+  l(10)
+}
+m()
+rm(m, l)
+```
+
+For functions, there is one small tweak to the rule. If you are using a name in a context where it's obvious that you want a function (e.g., f(3)), R will ignore objects that are not functions while it is searching. In the following example n takes on a different value depending on whether R is looking for a function or a variable.
+
+```{r, echo = TRUE}
+
+n <- function(x) x / 5
+
+o <- function() {
+  n <- 10 
+  n(n)
+}
+
+o()
+rm(o)
+```
+
+However, using the same name for function and other objects will make for confusing code, and is generally best avoided
+
+### 6.2.3 A fresh start
+
+What happens to the values in between invocation of a function? What will happen the first time you run this function? What will happen the second time? (If you haven't seen exists() before: it returns TRUE if there's a variable of that name, otherwise it returns FALSE).
+ 
+ 
+```{r, echo = TRUE}
+j <- function() {
+  if (!exists('a')){
+    a <- 1
+  } else {
+  a <- a + 1
+  }
+  print(a)
+}
+
+j()
+j()
+rm(j)
+
+
+```
+
+You might be surprised that it returns the same value, 1, every time. This is because every time a function is called, a new environment is created to host executio. A function has no way to tell what happened the last time it was run; each invocation is completely independent. (We'll see some ways to get around this in Section 10.3.2)
+
+### 6.2.4 Dynamic lookup 
+
+Lexical scoping determines where to look for values, not when to look for them. R looks for values when the function is run, not when it's created. This means that the output of a function can be different depending on objects outside its environment:
+
+```{r, echo = TRUE}
+f <- function() x
+x <- 15
+f()
+
+x <- 20 
+f()
+
+```
+
+You generally want to avoid this behavior because it means the function is no longer self-contained. This is a common error -- if you make a spelling mistake in you code, you won't get an error when you create the function, and you might not even get one when you run the function, depending on what variable sare defined in the global environment.
+
+One way to detect this problem is the findGlobals() function from codetools. This function lists all external dependencies of a function:
+
+```{r, echo = TRUE}
+f <- function() x + 1
+codetools::findGlobals(f)
+```
+
+Another way to try and solve the problem would be manually change the environment of the function to the emptyenv(), an environment which contains absolutely nothing:
+```{r, echo = TRUE, error = TRUE}
+
+environment(f) <- emptyenv()
+f()
+
+```
+
+This doesn't work because R relies on lexical scoping to find everythin even the '+' operator. It's never possible to make a function completely self-contained because you must always rely on functions defined in base R or other packages. 
+
+You can use this same idea to do other things that are extremely ill-advised. For examples, since all of the standard operators in R are functions, you can override them with your own alternatives.
+
+```{r, echo = TRUE}
+
+'(' <- function(el) {
+  if (is.numeric(el) && runif(1) < 0.1) {
+    el + 1
+  } else {
+    el
+  }
+}
+
+replicate(50,(1 + 2)) 
+rm('(')
+```
+This will introduce a particularly pernicious bug: 10% of the time, 1 will be added to any numeric calculation inside parenthese. This is another good reason to rgularly restart with a clean R session !
+## 6.3 Every operation is a function call 
+
+"To understand computations in R, two slogans are helpful:
+  * Everything that exists is an object.
+  * Everything that happens is a function call"
+                    ---John Chambers
+The previous example of redefining ( works because every operation in R is a function call, whether or not it look like one. This includes infix operators like +, control flow operators like for, if, and while, subsetting operators like [] and $, and even the curly brace {. This means that each pair of statements in the following example is exactly equivalent. Note that ', the backtick, lets you refer to functions or variables that have otherwise reserved or illegal names:
+
+
+
+
+
+
